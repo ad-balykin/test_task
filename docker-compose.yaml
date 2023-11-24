@@ -1,0 +1,59 @@
+services:
+  courses-api:
+    container_name: courses-api
+    build:
+      context: .
+      dockerfile: .local/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    networks:
+      - samplenetwork
+
+  courses-runner:
+    container_name: courses-runner
+    build:
+      context: .
+      dockerfile: .local/Dockerfile
+    volumes:
+      - .:/code
+    command: python -m application run-runners
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    networks:
+      - samplenetwork
+
+  postgres:
+    image: postgres:14.6
+    container_name: test-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: test-courses
+      POSTGRES_USER: test-courses
+      POSTGRES_PASSWORD: test-courses
+      PGDATA: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test-courses"]
+      interval: 1s
+      timeout: 1s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - samplenetwork
+
+networks:
+  ### example: `docker network create -d bridge samplenetwork`
+  samplenetwork:
+    external: True
+
+volumes:
+  pgdata:
